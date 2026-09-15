@@ -1,0 +1,52 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MLBB Coach V5</title>
+<style>
+body{margin:0;background:#08101e;color:#eef4ff;font:14px system-ui;padding:20px}main{max-width:1100px;margin:auto}
+h1{margin:0}.muted{color:#9aabc8}.grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}.p{background:#111c31;border:1px solid #2a3b59;border-radius:15px;padding:15px}
+.drop{border:2px dashed #3b5475;border-radius:12px;padding:30px;text-align:center;margin:15px 0}
+button,label{background:#1b2b45;color:white;border:1px solid #385071;border-radius:9px;padding:9px 13px;cursor:pointer}
+.primary{background:#64dcff;color:#06111b;border:0;font-weight:800}input,select{background:#0b1527;color:white;border:1px solid #30425f;border-radius:8px;padding:9px}
+img{max-width:100%;max-height:420px;border-radius:10px;display:none}.row{display:flex;gap:8px;flex-wrap:wrap}
+.card{background:#0b1527;border:1px solid #2a3b57;border-radius:11px;padding:12px;margin:9px 0;line-height:1.5}
+.alert{border-left:4px solid #ffd166}.danger{border-left:4px solid #ff7080}.good{border-left:4px solid #66e39a}
+table{width:100%;border-collapse:collapse}td,th{padding:7px;border-bottom:1px solid #293852;text-align:left}
+@media(max-width:800px){.grid{grid-template-columns:1fr}}
+</style></head>
+<body><main>
+<h1>MLBB Coach <span style="color:#64dcff">V5</span></h1>
+<p class="muted">Screenshot-assisted, live-style coaching prototype • analysis only</p>
+<div class="grid">
+<section class="p"><h2>📸 Match input</h2>
+<div id="drop" class="drop"><b>Choose an MLBB screenshot</b><br><br>
+<label class="primary">Choose image<input id="file" type="file" accept="image/*" hidden></label></div>
+<img id="preview">
+<div class="row"><select id="phase"><option>Early game</option><option>Mid game</option><option>Late game</option></select>
+<select id="role"><option>Jungle</option><option>EXP</option><option>Mid</option><option>Gold</option><option>Roam</option></select>
+<input id="hero" placeholder="Your hero"></div><br>
+<button class="primary" id="analyze">Analyze</button> <button id="demo">Load demo</button> <button id="reset">Reset</button>
+<p id="status" class="muted">Upload a screenshot or load the demo.</p>
+</section>
+<section class="p"><h2>🧠 Coach</h2><div id="coach" class="muted">No game state analyzed yet.</div></section>
+</div>
+</main>
+<script>
+const $=x=>document.getElementById(x); let loaded=false;
+$("file").onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{$("preview").src=r.result;$("preview").style.display="block";loaded=true;$("status").textContent="Screenshot loaded.";};r.readAsDataURL(f)};
+function state(){return{role:$("role").value,phase:$("phase").value,hero:$("hero").value||"Unknown",goldYou:10.8,goldEnemy:12.1,killsYou:8,killsEnemy:11,towersYou:2,towersEnemy:3,objective:"Turtle soon",fed:"Melissa",enemyJungle:"Hirara"}}
+function coach(s){
+let behind=s.goldYou<s.goldEnemy||s.killsYou<s.killsEnemy;
+let cards=[];
+cards.push(`<div class="card"><b>Game state</b><table><tr><th>Role</th><td>${s.role}</td></tr><tr><th>Phase</th><td>${s.phase}</td></tr><tr><th>Gold</th><td>${s.goldYou}k vs ${s.goldEnemy}k</td></tr><tr><th>Kills</th><td>${s.killsYou} vs ${s.killsEnemy}</td></tr><tr><th>Towers</th><td>${s.towersYou} vs ${s.towersEnemy}</td></tr><tr><th>Objective</th><td>${s.objective}</td></tr></table></div>`);
+if(behind)cards.push(`<div class="card danger"><b>⚠️ Stabilise</b><br>Your supplied state is behind. Avoid low-percentage fights; prioritise safe farm, wave control and numbers advantages.</div>`);
+cards.push(`<div class="card alert"><b>🐢 Objective preparation</b><br>Turtle is flagged as upcoming. Clear the nearest safe wave, rotate early and establish vision before committing.</div>`);
+cards.push(`<div class="card alert"><b>🎯 Threat tracking</b><br>${s.fed} is the current fed-threat flag. Track ${s.enemyJungle} and avoid isolated overextension when they are missing.</div>`);
+let roleAdvice={Jungle:"Prioritise farm efficiency, Retribution timing and objective control.",EXP:"Control the side wave and join only when the rotation has a clear payoff.",Mid:"Push safely, then move first to the objective or threatened side.",Gold:"Preserve your life and gold income; don't trade your carry position for a low-value kill.",Roam:"Protect the main damage dealer and create the first safe move."}[s.role];
+cards.push(`<div class="card good"><b>🧩 Role coaching</b><br>${roleAdvice}</div>`);
+cards.push(`<div class="card"><b>🔭 V5 vision targets</b><br>Hero recognition • items • levels • gold • kills • towers • Turtle/Lord • minimap state • temporal changes</div>`);
+return cards.join("");
+}
+$("demo").onclick=()=>{$("coach").innerHTML=coach(state());$("status").textContent="Demo state loaded. This exercises the coaching engine."};
+$("analyze").onclick=()=>{if(!loaded){$("status").textContent="Please upload a screenshot first, or use Load demo.";return}$("coach").innerHTML=coach(state());$("status").textContent="Analysis completed. The current prototype accepts the image but still needs a vision backend for automatic MLBB element recognition."};
+$("reset").onclick=()=>location.reload();
+</script></body></html>
